@@ -1,72 +1,66 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, useWindowDimensions } from 'react-native';
-import lessons from '../data/lessons';
-import { getXP, getCompleted } from '../utils/storage';
-import HeroHeader from '../components/HeroHeader';
-import LessonCard from '../components/LessonCard';
-import MetricPill from '../components/MetricPill';
-import QuickStartCard from '../components/QuickStartCard';
-import { colors, layout } from '../theme';
+// src/screens/HomeScreen.js
+import React from 'react';
+import { View, Text, ScrollView } from 'react-native';
+import GameModeCard from '../components/GameModeCard';
+import { userState } from '../data/mockState';
 
 export default function HomeScreen({ navigation }) {
-  const [xp, setXP] = useState(0);
-  const [completed, setCompleted] = useState({});
-  const { width } = useWindowDimensions();
-
-  useEffect(() => {
-    const load = async () => {
-      setXP(await getXP());
-      setCompleted(await getCompleted());
-    };
-    const unsub = navigation.addListener('focus', load);
-    load();
-    return unsub;
-  }, [navigation]);
-
-  const cols = width >= 1200 ? 3 : width >= 820 ? 2 : 1;
-  const data = (lessons || []).filter(l => l && l.id && l.title);
-
-  const quickPlay = () => {
-    const first = data[0];
-    if (first) navigation.navigate('Quiz', { lessonId: first.id });
-  };
+  const u = userState.user;
 
   return (
-    <View style={styles.container}>
-      <HeroHeader />
-
-      <View style={{ marginTop:16 }}>
-        <QuickStartCard onPress={quickPlay} />
-      </View>
-
-      <View style={styles.toolbar}>
-        <MetricPill icon="★" text={`${xp} XP`} />
-        <Text style={{ color: colors.sub }}>Lecciones recomendadas</Text>
-      </View>
-
-      <FlatList
-        data={data}
-        key={cols}
-        numColumns={cols}
-        columnWrapperStyle={cols > 1 ? { gap: layout.gap } : null}
-        contentContainerStyle={{ gap: layout.gap, paddingBottom: 48 }}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+    <ScrollView style={{ flex: 1, backgroundColor: '#f5f7fb' }} contentContainerStyle={{ padding: 16 }}>
+      {/* Header con progreso */}
+      <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 14, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 3 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Text style={{ fontSize: 28 }}>🧑‍🎓</Text>
           <View style={{ flex: 1 }}>
-            <LessonCard
-              title={item.title}
-              summary={item.summary}
-              completed={completed[item.id]}
-              onPress={() => navigation.navigate('Lesson', { lessonId: item.id })}
-            />
+            <Text style={{ fontWeight: '800' }}>{u.name}</Text>
+            <Text style={{ opacity: 0.7 }}>Nivel {u.level}</Text>
+            <View style={{ height: 6, backgroundColor: '#eef2ff', borderRadius: 6, marginTop: 8 }}>
+              <View style={{ height: 6, width: `${(u.xp % 1000) / 10}%`, backgroundColor: '#6366f1', borderRadius: 6 }} />
+            </View>
+            <Text style={{ opacity: 0.6, fontSize: 12, marginTop: 4 }}>{u.xp % 1000} / 1000 XP</Text>
           </View>
-        )}
-      />
-    </View>
+          <View>
+            <Text style={{ opacity: 0.7 }}>🔥 {u.streakDays} días</Text>
+            <Text style={{ opacity: 0.7 }}>🪙 {u.coins}</Text>
+            <Text style={{ opacity: 0.7 }}>🏆 {u.xp} XP</Text>
+          </View>
+        </View>
+      </View>
+
+      <Text style={{ marginTop: 18, marginBottom: 12, fontWeight: '800', fontSize: 18 }}>Modos de Juego</Text>
+
+      <View style={{ gap: 14 }}>
+        <GameModeCard title="Ramas de Aprendizaje" subtitle="Progresa por niveles temáticos" gradient={['#6a11cb', '#2575fc']} onPress={() => navigation.navigate('Branches')} />
+        <GameModeCard title="Lecciones" subtitle="Aprende a tu ritmo" gradient={['#1e3c72', '#2a5298']} onPress={() => navigation.navigate('Lesson')} />
+        <GameModeCard title="Modo Desafío" subtitle="Contra reloj con multiplicadores de XP" gradient={['#ff512f', '#dd2476']} onPress={() => {}} />
+        <GameModeCard title="Simulador" subtitle="Escenarios del mundo real" gradient={['#833ab4', '#fd1d1d']} onPress={() => {}} />
+        <GameModeCard title="Modo Batalla" subtitle="Compite contra la IA" gradient={['#00b09b', '#96c93d']} onPress={() => {}} />
+      </View>
+
+      <Text style={{ marginTop: 22, marginBottom: 8, fontWeight: '800' }}>Básico</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+        {['Introducción al Dinero', 'Presupuesto Personal', 'Ahorro Inteligente'].map((t, i) => (
+          <View key={i} style={miniCard}>
+            <Text style={{ fontSize: 12, opacity: 0.6 }}>50-75 XP</Text>
+            <Text style={{ fontWeight: '700', marginTop: 6 }}>{t}</Text>
+            <Text style={{ opacity: 0.6, marginTop: 6, fontSize: 12 }}>Aprende conceptos básicos</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container:{ flex:1, padding:20, alignSelf:'center', width:'100%', maxWidth: layout.maxWidth },
-  toolbar:{ marginTop:18, marginBottom:12, flexDirection:'row', alignItems:'center', justifyContent:'space-between' },
-});
+const miniCard = {
+  width: 260,
+  backgroundColor: '#fff',
+  borderRadius: 14,
+  padding: 14,
+  shadowColor: '#000',
+  shadowOpacity: 0.06,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 4 },
+  elevation: 2,
+};
